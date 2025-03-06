@@ -4,7 +4,7 @@ import ast.*
 import software_testing_hw4.evaluation.Evaluator.evalExpression
 
 object Executor {
-    fun execute(initialState: ProgramState): List<ProgramState> {
+    fun executeInner(initialState: ProgramState): List<ProgramState> {
         val completedStates = mutableListOf<ProgramState>()
         val queue = ArrayDeque(listOf(initialState))
 
@@ -25,8 +25,8 @@ object Executor {
                 is IfStmt -> {
                     val condition = evalExpression(state.memory, stmt.condition)
 
-                    queue += state.branch(condition, stmt.thenBlock, isTrueBranch = true)
-                    queue += state.branch("!($condition)", stmt.elseBlock, isTrueBranch = false)
+                    queue += state.branch(condition, stmt.thenBlock)
+                    queue += state.branch("!($condition)", stmt.elseBlock)
                 }
                 is ReturnStmt -> {
                     state.result = evalExpression(state.memory, stmt.returnExpr)
@@ -44,13 +44,12 @@ object Executor {
         val program = function.body + ReturnStmt(function.returnValue!!)
         val initialState = ProgramState(initialMemory, mutableListOf(), program.toMutableList())
 
-        return execute(initialState)
+        return executeInner(initialState)
     }
 
     private fun ProgramState.branch(
         condition: String,
-        branchStmts: List<Statement>,
-        isTrueBranch: Boolean
+        branchStmts: List<Statement>
     ) = copy(
         memory = memory.toMutableMap(),
         pathCondition = (pathCondition + condition).toMutableList(),
